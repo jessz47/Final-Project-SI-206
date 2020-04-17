@@ -29,25 +29,59 @@ def get_AQ_data(email, param, bdate, edate, state_num, county_num):
 
     results = requests.get(request_url)
     r = json.loads(results.text)
-    print(json.dumps(r))
+    return json.dumps(r)
     
                   
 
 
-# def setUpTableAQ(data, cur, conn):
+def setUpTableReadings(email, param, bdate, edate, state_num, county_num, cur, conn):
 
-#     cur.execute("DROP TABLE IF EXISTS Air Quality")
-#     cur.execute('''
-#         CREATE TABLE IF NOT EXISTS Air Quality 
-#             ( TEXT PRIMARY KEY, 
-#             name TEXT, 
-#             address TEXT, 
-#             zip TEXT, 
-#             category_id INTEGER, 
-#     ''')
-#     conn.commit()
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS Readings 
+            (reading_id INTEGER PRIMARY KEY
+             date_local TEXT, 
+             reading TEXT, 
+             unit TEXT
+             county_id TEXT,
+             state_id TEXT 
+             parameter TEXT 
 
-    pass 
+    ''')
+    conn.commit()
+    data = get_AQ_data(email, param, bdate, edate, state_num, county_num)
+    for reading in data: 
+        cur.execute('''INSERT INTO Readings (reading_id, date_local, reading, unit, county_id, state_id, parameter) 
+                VALUES (?,?, ?, ?, ?, ?, ?)''', (reading['#entry'], reading['date_local'], reading['sample_measurement'], reading['units_of_measure'], reading['county_code'], reading['state_code'], reading['parameter']))
+    conn.commit()
+
+def setUpTableState(email, param, bdate, edate, state_num, county_num, cur,conn):
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS State 
+            (state_id INTEGER PRIMARY KEY 
+             state_name TEXT, 
+
+    ''')
+    conn.commit()
+    data = get_AQ_data(email, param, bdate, edate, state_num, county_num)
+    for state in data: 
+        cur.execute('''INSERT INTO State (state_id, state_name) 
+                VALUES (?,?)''', (state['state_code'], state['state']))
+    conn.commit()
+
+def setUpTableCounty(email, param, bdate, edate, state_num, county_num, cur,conn):
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS County 
+           (county_id INTEGER PRIMARY KEY 
+            county_name TEXT, 
+            state_id TEXT,
+    ''')  
+    conn.commit() 
+    county_data = get_AQ_data(email, param, bdate, edate, state_num, county_num)
+    for county in county_data:
+        cur.execute('''INSERT INTO County (county_id, county_name, state_id) 
+                VALUES (?,?,?)''', (county['county_code'], county['county']), county['state_code'])
+    conn.commit()
+ 
 
 
 
