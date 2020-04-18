@@ -8,6 +8,7 @@ import requests
 #Project Topic: How the Coronavirus is affecting CO2 Levels in the Atmosphere in Delhi, India (using AQI) and Int'l Flights 
 API_AQ = 'berryram97'
 
+
 #sets up database 
 def setUpDatabase(db_name):
     path = os.path.dirname(os.path.abspath(__file__))
@@ -23,6 +24,12 @@ def create_request_url_AQ(email, param, bdate, edate, state_num, county_num):
     #https://aqs.epa.gov/data/api/sampleData/byCounty?email=test@aqs.api&key=test&param=88101&bdate=20160101&edate=20160228&state=37&county=183    request_url = 'https://api.breezometer.com/air-quality/v2/historical/hourly?lat=' + latitude + '&lon=' + longitude + '&key=' API_AQ + '&start_datetime=' + start_date + '&end_datetime=' + end_date
     request_url = 'https://aqs.epa.gov/data/api/sampleData/byCounty?email=' + email + '&key=' + API_AQ + '&param=' + str(param) + '&bdate=' + str(bdate) + '&edate=' + str(edate) + '&state=' + str(state_num) + '&county=' + str(county_num)
     return request_url
+
+#countries are written in all lowercase
+#caseType must be one of : confirmed, recovered, deaths 
+def create_request_url_COVID(country, caseType):
+    url = 'https://api.covid19api.com/dayone/country/' + country + "/status/" + caseType
+    return url 
     
 def get_AQ_data(email, param, bdate, edate, state_num, county_num):
     request_url = create_request_url_AQ(email, param, bdate, edate, state_num, county_num)
@@ -30,8 +37,13 @@ def get_AQ_data(email, param, bdate, edate, state_num, county_num):
     results = requests.get(request_url)
     r = json.loads(results.text)
     return json.dumps(r)
-    
-                  
+
+def get_COVID_data(country, caseType):
+    requests_url = create_request_url_COVID(country, caseType)
+
+    results = requests.get(requests_url)
+    r = json.loads(results.text)
+    return json.dumps(r)
 
 
 def setUpTableReadings(email, param, bdate, edate, state_num, county_num, cur, conn):
@@ -82,11 +94,19 @@ def setUpTableCounty(email, param, bdate, edate, state_num, county_num, cur,conn
                 VALUES (?,?,?)''', (county['county_code'], county['county']), county['state_code'])
     conn.commit()
  
+def setUpC19Country(country, caseType, cur, conn):
+    cur.execute('CREATE TABLE Country (Status TEXT, Cases INTEGER, Date TEXT)')
+    conn.commit()
+    country_data = get_COVID_data(country, caseType)
+    for data in country_data:
+        cur.execute('INSERT INTO Country (Status, Cases, Date) VALUES (?, ?)', (data['Status'], data['Cases'], data['Date']))
+    conn.commit() 
 
 
 
 def main():
     get_AQ_data('jessz@umich.edu', 88101, 20200101, 20200413, 36, '061')
+    get_COVID_data("south-africa", "confirmed")
 
 
 
