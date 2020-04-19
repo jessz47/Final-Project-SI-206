@@ -47,7 +47,7 @@ def get_COVID_data(country, caseType):
 
     results = requests.get(requests_url)
     c = json.loads(results.text)
-    #print(json.dumps(c))
+   #print(json.dumps(c))
     
     return json.dumps(c)
 
@@ -106,13 +106,13 @@ def setUpTableCounty(email, param, bdate, edate, state_num, county_num, cur,conn
 
 
 def setUpC19Country(country, caseType, cur, conn):
-    cur.execute('CREATE TABLE IF NOT EXISTS Covid (Country TEXT PRIMARY KEY, Status, Cases INTEGER, Date TEXT)')
+    cur.execute('CREATE TABLE IF NOT EXISTS Covid (Country TEXT PRIMARY KEY, State TEXT, Status TEXT, Cases INTEGER, Date TEXT)')
     conn.commit()
     country_data = get_COVID_data(country, caseType)
     data_covid = json.loads(country_data)
 
     for data in data_covid:
-        cur.execute('INSERT OR IGNORE INTO Covid (Country, Status, Cases, Date) VALUES (?, ?, ?, ?)', (data['Country'], data['Status'], data['Cases'], data['Date']))
+        cur.execute('INSERT OR IGNORE INTO Covid (Country, State, Status, Cases, Date) VALUES (?, ?, ?, ?, ?)', (data['Country'], data['Province'], data['Status'], data['Cases'], data['Date']))
     conn.commit() 
 
 def get_readings(cur, conn):
@@ -134,7 +134,7 @@ def get_county(cur, conn):
     print(results3) 
 
 def get_COVID_country(cur, conn):
-    cur.execute("SELECT Country, Status, Cases, Date FROM Covid")
+    cur.execute("SELECT Country, State, Status, Cases, Date FROM Covid")
     results4 = cur.fetchall()
     conn.commit()
     print(results4)
@@ -165,13 +165,14 @@ def get_COVID_country(cur, conn):
 
 def main():
     cur, conn = setUpDatabase('Readings.db')
-    # setUpTableCounty('jessz@umich.edu', '88101', '20200101', '20200415', '06', '037', cur, conn)
-    # setUpReadingsTable('jessz@umich.edu', '88101', '20200101', '20200415', '06', '037', cur, conn)
-    # setUpTableState('jessz@umich.edu', '88101', '20200101', '20200415', '06', '037', cur, conn)
+    setUpTableCounty('jessz@umich.edu', '88101', '20200101', '20200415', '06', '067', cur, conn)
+    setUpReadingsTable('jessz@umich.edu', '88101', '20200101', '20200415', '06', '067', cur, conn)
+    setUpTableState('jessz@umich.edu', '88101', '20200101', '20200415', '06', '067', cur, conn)
     setUpC19Country('United States of America', 'confirmed', cur, conn)
-    # get_readings(cur, conn)
-    # get_state(cur, conn)
-    # get_county(cur, conn) 
+
+    get_readings(cur, conn)
+    get_state(cur, conn)
+    get_county(cur, conn) 
     get_COVID_country(cur, conn)
 
 
