@@ -7,7 +7,7 @@ import pdb
 
 #Names: Jessica Zhang 
 #Project Topic: How the Coronavirus is affecting CO2 Levels in the Atmosphere in Delhi, India (using AQI) and Int'l Flights 
-API_AQ = 'berryram97'
+API_AQ = 'bolebird88'
 
 
 #sets up database 
@@ -82,7 +82,7 @@ def setUpReadingsTable(email, param, bdate, edate, state_num, county_num, cur, c
 def setUpTableState(email, param, bdate, edate, state_num, county_num, cur,conn):
     cur.execute('''
         CREATE TABLE IF NOT EXISTS State 
-            (state_id INTEGER PRIMARY KEY, 
+            (state_id TEXT PRIMARY KEY, 
              state_name TEXT) 
 
     ''')
@@ -119,34 +119,34 @@ def setUpC19Country(country, caseType, cur, conn):
     conn.commit() 
 
 def get_readings(cur, conn):
-    cur.execute("SELECT county_id, county_name, state_id FROM County")
-    results = cur.fetchall()
+    cur.execute("SELECT reading_id, date_local, reading, unit, county_id, state_id, parameter FROM Readings")
+    results1 = cur.fetchall()
     conn.commit()
-    print(results) 
+    print(results1) 
 
 def get_state(cur, conn):
-    cur.execute("SELECT county_id, county_name, state_id FROM County")
-    results = cur.fetchall()
+    cur.execute("SELECT state_id, state_name FROM State")
+    results2 = cur.fetchall()
     conn.commit()
-    print(results) 
+    print(results2) 
     
 def get_county(cur, conn):
     cur.execute("SELECT county_id, county_name, state_id FROM County")
-    results = cur.fetchall()
+    results3 = cur.fetchall()
     conn.commit()
-    print(results) 
+    print(results3) 
 
 
 
 
  
-def setUpC19Country(country, caseType, cur, conn):
-    cur.execute('CREATE TABLE Country (Status TEXT, Cases INTEGER, Date TEXT)')
-    conn.commit()
-    country_data = get_COVID_data(country, caseType)
-    for data in country_data:
-        cur.execute('INSERT INTO Country (Status, Cases, Date) VALUES (?, ?)', (data['Status'], data['Cases'], data['Date']))
-    conn.commit() 
+# def setUpC19Country(country, caseType, cur, conn):
+#     cur.execute('CREATE TABLE Country (Status TEXT, Cases INTEGER, Date TEXT)')
+#     conn.commit()
+#     country_data = get_COVID_data(country, caseType)
+#     for data in country_data:
+#         cur.execute('INSERT INTO Country (Status, Cases, Date) VALUES (?, ?)', (data['Status'], data['Cases'], data['Date']))
+#     conn.commit() 
 
 
 
@@ -168,13 +168,13 @@ def setUpC19Country(country, caseType, cur, conn):
     #     self.assertEqual(list_state[0][0], "36")
 
 def main():
-    # cur, conn = setUpDatabase('county.db')
-    # setUpTableCounty('jessz@umich.edu', 88101, 20200101, 20200413, 36, '061', cur, conn)
-    # conn.close
     cur, conn = setUpDatabase('Readings.db')
-    setUpTableCounty('jessz@umich.edu', '88101', '20200101', '20200413', '36', '061', cur, conn)
-    setUpReadingsTable('jessz@umich.edu', '88101', '20200101', '20200413', '36', '061', cur, conn)
-    setUpTableState('jessz@umich.edu', '88101', '20200101', '20200413', '36', '061', cur, conn)
+    setUpTableCounty('jessz@umich.edu', '88101', '20200101', '20200415', '06', '037', cur, conn)
+    setUpReadingsTable('jessz@umich.edu', '88101', '20200101', '20200415', '06', '037', cur, conn)
+    setUpTableState('jessz@umich.edu', '88101', '20200101', '20200415', '06', '037', cur, conn)
+
+    get_readings(cur, conn)
+    get_state(cur, conn)
     get_county(cur, conn) 
     
 
