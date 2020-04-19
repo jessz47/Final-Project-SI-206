@@ -9,6 +9,7 @@ import pdb
 #Project Topic: How the Coronavirus is affecting CO2 Levels in the Atmosphere in Delhi, India (using AQI) and Int'l Flights 
 API_AQ = 'berryram97'
 
+
 #sets up database 
 def setUpDatabase(db_name):
     path = os.path.dirname(os.path.abspath(__file__))
@@ -31,7 +32,7 @@ def create_request_url_COVID(country, caseType):
     url = 'https://api.covid19api.com/dayone/country/' + country + "/status/" + caseType
     return url 
 
-
+    
 def get_AQ_data(email, param, bdate, edate, state_num, county_num):
     request_url = create_request_url_AQ(email, param, bdate, edate, state_num, county_num)
 
@@ -47,8 +48,13 @@ def get_COVID_data(country, caseType):
     results = requests.get(requests_url)
     r = json.loads(results.text)
     return json.dumps(r)
-    
-                  
+
+def get_COVID_data(country, caseType):
+    requests_url = create_request_url_COVID(country, caseType)
+
+    results = requests.get(requests_url)
+    r = json.loads(results.text)
+    return json.dumps(r)
 
 
 def setUpReadingsTable(email, param, bdate, edate, state_num, county_num, cur, conn):
@@ -134,6 +140,13 @@ def get_county(cur, conn):
 
 
  
+def setUpC19Country(country, caseType, cur, conn):
+    cur.execute('CREATE TABLE Country (Status TEXT, Cases INTEGER, Date TEXT)')
+    conn.commit()
+    country_data = get_COVID_data(country, caseType)
+    for data in country_data:
+        cur.execute('INSERT INTO Country (Status, Cases, Date) VALUES (?, ?)', (data['Status'], data['Cases'], data['Date']))
+    conn.commit() 
 
 
 
@@ -167,6 +180,8 @@ def main():
     
 
 
+    get_AQ_data('jessz@umich.edu', 88101, 20200101, 20200413, 36, '061')
+    get_COVID_data("south-africa", "confirmed")
 
 
 
