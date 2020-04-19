@@ -177,11 +177,6 @@ def main():
     setUpTableState('jessz@umich.edu', '88101', '20200101', '20200413', '36', '061', cur, conn)
     get_county(cur, conn) 
     
-    
-
-
-    get_AQ_data('jessz@umich.edu', 88101, 20200101, 20200413, 36, '061')
-    get_COVID_data("south-africa", "confirmed")
 
 
 
