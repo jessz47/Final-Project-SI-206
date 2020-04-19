@@ -46,15 +46,10 @@ def get_COVID_data(country, caseType):
     requests_url = create_request_url_COVID(country, caseType)
 
     results = requests.get(requests_url)
-    r = json.loads(results.text)
-    return json.dumps(r)
-
-def get_COVID_data(country, caseType):
-    requests_url = create_request_url_COVID(country, caseType)
-
-    results = requests.get(requests_url)
-    r = json.loads(results.text)
-    return json.dumps(r)
+    c = json.loads(results.text)
+    #print(json.dumps(c))
+    
+    return json.dumps(c)
 
 
 def setUpReadingsTable(email, param, bdate, edate, state_num, county_num, cur, conn):
@@ -111,11 +106,13 @@ def setUpTableCounty(email, param, bdate, edate, state_num, county_num, cur,conn
 
 
 def setUpC19Country(country, caseType, cur, conn):
-    cur.execute('CREATE TABLE IF NOT EXISTS Country (Status TEXT, Cases INTEGER, Date TEXT)')
+    cur.execute('CREATE TABLE IF NOT EXISTS Covid (Country TEXT PRIMARY KEY, Status, Cases INTEGER, Date TEXT)')
     conn.commit()
     country_data = get_COVID_data(country, caseType)
-    for data in country_data:
-        cur.execute('INSERT INTO Country (Status, Cases, Date) VALUES (?, ?, ?)', (data['Status'], data['Cases'], data['Date']))
+    data_covid = json.loads(country_data)
+
+    for data in data_covid:
+        cur.execute('INSERT OR IGNORE INTO Covid (Country, Status, Cases, Date) VALUES (?, ?, ?, ?)', (data['Country'], data['Status'], data['Cases'], data['Date']))
     conn.commit() 
 
 def get_readings(cur, conn):
@@ -136,17 +133,16 @@ def get_county(cur, conn):
     conn.commit()
     print(results3) 
 
+def get_COVID_country(cur, conn):
+    cur.execute("SELECT Country, Status, Cases, Date FROM Covid")
+    results4 = cur.fetchall()
+    conn.commit()
+    print(results4)
 
 
 
- 
-# def setUpC19Country(country, caseType, cur, conn):
-#     cur.execute('CREATE TABLE Country (Status TEXT, Cases INTEGER, Date TEXT)')
-#     conn.commit()
-#     country_data = get_COVID_data(country, caseType)
-#     for data in country_data:
-#         cur.execute('INSERT INTO Country (Status, Cases, Date) VALUES (?, ?)', (data['Status'], data['Cases'], data['Date']))
-#     conn.commit() 
+
+
 
 
 
@@ -169,14 +165,18 @@ def get_county(cur, conn):
 
 def main():
     cur, conn = setUpDatabase('Readings.db')
-    setUpTableCounty('jessz@umich.edu', '88101', '20200101', '20200415', '06', '037', cur, conn)
-    setUpReadingsTable('jessz@umich.edu', '88101', '20200101', '20200415', '06', '037', cur, conn)
-    setUpTableState('jessz@umich.edu', '88101', '20200101', '20200415', '06', '037', cur, conn)
+    # setUpTableCounty('jessz@umich.edu', '88101', '20200101', '20200415', '06', '037', cur, conn)
+    # setUpReadingsTable('jessz@umich.edu', '88101', '20200101', '20200415', '06', '037', cur, conn)
+    # setUpTableState('jessz@umich.edu', '88101', '20200101', '20200415', '06', '037', cur, conn)
+    setUpC19Country('United States of America', 'confirmed', cur, conn)
+    # get_readings(cur, conn)
+    # get_state(cur, conn)
+    # get_county(cur, conn) 
+    get_COVID_country(cur, conn)
 
-    get_readings(cur, conn)
-    get_state(cur, conn)
-    get_county(cur, conn) 
-    
+
+    #get_COVID_data("United States", "confirmed")
+
 
 
 
