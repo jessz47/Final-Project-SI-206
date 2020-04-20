@@ -108,11 +108,21 @@ def setUpTableCounty(email, param, bdate, edate, state_num, county_num, cur,conn
 def setUpC19Country(country, caseType, cur, conn):
     cur.execute('CREATE TABLE IF NOT EXISTS Covid (Country TEXT PRIMARY KEY, State TEXT, Status TEXT, Cases INTEGER, Date TEXT)')
     conn.commit()
+    rows_added = 0 
     country_data = get_COVID_data(country, caseType)
     data_covid = json.loads(country_data)
-
+    
     for data in data_covid:
-        cur.execute('INSERT OR IGNORE INTO Covid (Country, State, Status, Cases, Date) VALUES (?, ?, ?, ?, ?)', (data['Country'], data['Province'], data['Status'], data['Cases'], data['Date']))
+        cur.execute('SELECT * FROM Covid WHERE State = ? AND Date = ?', (data['Province'], data['Date']))
+        row_count = cur.rowcount 
+        print(row_count)
+        if(row_count == 0 and rows_added < 20):
+            cur.execute('INSERT OR IGNORE INTO Covid (Country, State, Status, Cases, Date) VALUES (?, ?, ?, ?, ?)', (data['Country'], data['Province'], data['Status'], data['Cases'], data['Date']))
+            rows_added += 1 
+        elif(rows_added > 20):
+            break
+        elif(row_count > 0):
+            continue
     conn.commit() 
 
 def get_readings(cur, conn):
@@ -134,7 +144,7 @@ def get_county(cur, conn):
     print(results3) 
 
 def get_COVID_country(cur, conn):
-    cur.execute("SELECT Country, State, Status, Cases, Date FROM Covid")
+    cur.execute("SELECT * FROM Covid")
     results4 = cur.fetchall()
     conn.commit()
     print(results4)
@@ -168,7 +178,7 @@ def main():
     setUpTableCounty('jessz@umich.edu', '88101', '20200101', '20200415', '06', '067', cur, conn)
     setUpReadingsTable('jessz@umich.edu', '88101', '20200101', '20200415', '06', '067', cur, conn)
     setUpTableState('jessz@umich.edu', '88101', '20200101', '20200415', '06', '067', cur, conn)
-    setUpC19Country('United States of America', 'confirmed', cur, conn)
+    setUpC19Country('united-states', 'confirmed', cur, conn)
 
     get_readings(cur, conn)
     get_state(cur, conn)
