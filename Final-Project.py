@@ -11,9 +11,9 @@ API_AQ = 'bolebird88'
 
 
 #sets up database 
-def setUpDatabase(db_name):
+def setUpDatabase(db_file):
     path = os.path.dirname(os.path.abspath(__file__))
-    conn = sqlite3.connect(path+'/'+ db_name)
+    conn = sqlite3.connect(path + '/' + db_file)
     cur = conn.cursor()
     return cur, conn
 
@@ -69,7 +69,7 @@ def setUpReadingsTable(email, param, bdate, edate, state_num, county_num, cur, c
     reading_data = get_AQ_data(email, param, bdate, edate, state_num, county_num)
     data = json.loads(reading_data)
     for index, reading in enumerate(data['Data']): 
-        cur.execute('''INSERT INTO Readings (reading_id, date_local, reading, unit, county_id, state_id, parameter) 
+        cur.execute('''INSERT OR IGNORE INTO Readings (reading_id, date_local, reading, unit, county_id, state_id, parameter) 
                 VALUES (?,?, ?, ?, ?, ?, ?)''', (index, reading['date_local'], reading['sample_measurement'], reading['units_of_measure'], reading['county_code'], reading['state_code'], reading['parameter']))
     conn.commit()
     
