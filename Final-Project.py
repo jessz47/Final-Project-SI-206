@@ -104,25 +104,6 @@ def setUpTableCounty(email, param, bdate, edate, state_num, county_num, cur,conn
                 VALUES (?,?,?)''', (county['county_code'], county['county'], county['state_code']))
     conn.commit()
 
-
-#def setUpC19Country(country, caseType, cur, conn):
-    #cur.execute('DROP TABLE Covid')
-    #cur.execute('CREATE TABLE IF NOT EXISTS Covid (Country TEXT, State TEXT, Status TEXT, Cases INTEGER, Date TEXT)')
-    #conn.commit()  
-    #rows_added = 0 
-    #country_data = get_COVID_data(country, caseType)
-    #data_covid = json.loads(country_data)
-    
-    #or data in data_covid:
-        ##cur.execute('SELECT * FROM Covid WHERE State = ? AND Date = ?', (data['Province'], data['Date']))
-        ##row_count = cur.rowcount
-        #if(rows_added < 20):
-            #cur.execute('INSERT INTO Covid (Country, State, Status, Cases, Date) VALUES (?, ?, ?, ?, ?)', (data['Country'], data['Province'], data['Status'], data['Cases'], data['Date']))
-            #rows_added += 1 
-        #elif(rows_added > 20):
-            #break
-    #conn.commit() 
-
 def createC19Table(country, caseType, cur, conn):
     cur.execute('DROP TABLE IF EXISTS Covid')
     cur.execute('CREATE TABLE Covid (Country TEXT, State TEXT, Status TEXT, Cases INTEGER, Date TEXT)')
@@ -132,10 +113,9 @@ def insertIntoC19Table(country, caseType, cur, conn):
     rows_added = 0
     country_data = get_COVID_data(country, caseType)
     data_covid = json.loads(country_data)
-    print(len(data_covid))
 
     for data in data_covid:
-        cur.execute('SELECT * FROM Covid WHERE Country = ? AND Date = ?', (data['Country'], data['Date']))
+        cur.execute('SELECT * FROM Covid WHERE Country = ? AND State = ? AND Cases = ? AND Date = ?', (data['Country'], data['Province'], data['Cases'], data['Date']))
         result = cur.fetchone()
 
         if(result):
@@ -201,9 +181,10 @@ def main():
     setUpTableCounty('jessz@umich.edu', '88101', '20200101', '20200415', '06', '067', cur, conn)
     setUpReadingsTable('jessz@umich.edu', '88101', '20200101', '20200415', '06', '067', cur, conn)
     setUpTableState('jessz@umich.edu', '88101', '20200101', '20200415', '06', '067', cur, conn)
-    createC19Table('switzerland', 'confirmed', cur, conn)
-    insertIntoC19Table('switzerland', 'confirmed', cur, conn)
-    insertIntoC19Table('switzerland', 'confirmed', cur, conn)
+    createC19Table('canada', 'confirmed', cur, conn)
+    for x in range(5):
+        insertIntoC19Table('canada', 'confirmed', cur, conn)
+
 
     get_readings(cur, conn)
     get_state(cur, conn)
