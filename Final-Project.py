@@ -11,9 +11,9 @@ API_AQ = 'bolebird88'
 
 
 #sets up database 
-def setUpDatabase(db_file):
+def setUpDatabase(db_name):
     path = os.path.dirname(os.path.abspath(__file__))
-    conn = sqlite3.connect(path + '/' + db_file)
+    conn = sqlite3.connect(path+'/'+ db_name)
     cur = conn.cursor()
     return cur, conn
 
@@ -68,19 +68,9 @@ def setUpReadingsTable(email, param, bdate, edate, state_num, county_num, cur, c
     conn.commit()
     reading_data = get_AQ_data(email, param, bdate, edate, state_num, county_num)
     data = json.loads(reading_data)
-    rows_added1 = 0
-
-    for index, reading in enumerate(data['Data']):
-        cur.execute('SELECT * FROM Readings WHERE date_local = ?', (reading['date_local'],))
-        row_count = len(cur.fetchall())
-        if(rows_added1 < 20):
-            cur.execute('''INSERT OR IGNORE INTO Readings (reading_id, date_local, reading, unit, county_id, state_id, parameter) 
-                        VALUES (?,?, ?, ?, ?, ?, ?)''', (index, reading['date_local'], reading['sample_measurement'], reading['units_of_measure'], reading['county_code'], reading['state_code'], reading['parameter']))
-            rows_added1 += 1 
-        elif(rows_added1 > 20):
-            break
-        elif(row_count > 0):
-            continue
+    for index, reading in enumerate(data['Data']): 
+        cur.execute('''INSERT INTO Readings (reading_id, date_local, reading, unit, county_id, state_id, parameter) 
+                VALUES (?,?, ?, ?, ?, ?, ?)''', (index, reading['date_local'], reading['sample_measurement'], reading['units_of_measure'], reading['county_code'], reading['state_code'], reading['parameter']))
     conn.commit()
     
 
@@ -115,27 +105,51 @@ def setUpTableCounty(email, param, bdate, edate, state_num, county_num, cur,conn
     conn.commit()
 
 
-def setUpC19Country(country, caseType, cur, conn):
-    cur.execute('CREATE TABLE IF NOT EXISTS Covid (Country TEXT PRIMARY KEY, State TEXT, Status TEXT, Cases INTEGER, Date TEXT)')
+#def setUpC19Country(country, caseType, cur, conn):
+    #cur.execute('DROP TABLE Covid')
+    #cur.execute('CREATE TABLE IF NOT EXISTS Covid (Country TEXT, State TEXT, Status TEXT, Cases INTEGER, Date TEXT)')
+    #conn.commit()  
+    #rows_added = 0 
+    #country_data = get_COVID_data(country, caseType)
+    #data_covid = json.loads(country_data)
+    
+    #or data in data_covid:
+        ##cur.execute('SELECT * FROM Covid WHERE State = ? AND Date = ?', (data['Province'], data['Date']))
+        ##row_count = cur.rowcount
+        #if(rows_added < 20):
+            #cur.execute('INSERT INTO Covid (Country, State, Status, Cases, Date) VALUES (?, ?, ?, ?, ?)', (data['Country'], data['Province'], data['Status'], data['Cases'], data['Date']))
+            #rows_added += 1 
+        #elif(rows_added > 20):
+            #break
+    #conn.commit() 
+
+def createC19Table(country, caseType, cur, conn):
+    cur.execute('DROP TABLE IF EXISTS Covid')
+    cur.execute('CREATE TABLE Covid (Country TEXT, State TEXT, Status TEXT, Cases INTEGER, Date TEXT)')
     conn.commit()
-    rows_added = 0 
+
+def insertIntoC19Table(country, caseType, cur, conn):
+    rows_added = 0
     country_data = get_COVID_data(country, caseType)
     data_covid = json.loads(country_data)
-    
+    print(len(data_covid))
+
     for data in data_covid:
-        cur.execute('SELECT * FROM Covid WHERE State = ? AND Date = ?', (data['Province'], data['Date']))
-        row_count = len(cur.fetchall())
-        if(rows_added < 20):
-            cur.execute('INSERT OR IGNORE INTO Covid (Country, State, Status, Cases, Date) VALUES (?, ?, ?, ?, ?)', (data['Country'], data['Province'], data['Status'], data['Cases'], data['Date']))
+        cur.execute('SELECT * FROM Covid WHERE Country = ? AND Date = ?', (data['Country'], data['Date']))
+        result = cur.fetchone()
+
+        if(result):
+            continue 
+        elif(rows_added < 20):
+            cur.execute('INSERT INTO Covid (Country, State, Status, Cases, Date) VALUES (?, ?, ?, ?, ?)', (data['Country'], data['Province'], data['Status'], data['Cases'], data['Date']))
             rows_added += 1 
         elif(rows_added > 20):
             break
-        elif(row_count > 0):
-            continue
-    conn.commit() 
 
+    conn.commit() 
+            
 def get_readings(cur, conn):
-    cur.execute("SELECT * FROM Readings")
+    cur.execute("SELECT reading_id, date_local, reading, unit, county_id, state_id, parameter FROM Readings")
     results1 = cur.fetchall()
     conn.commit()
     print(results1) 
@@ -184,10 +198,12 @@ def get_COVID_country(cur, conn):
 
 def main():
     cur, conn = setUpDatabase('Readings.db')
-    setUpTableCounty('jessz@umich.edu', '88101', '20200101', '20200415', '17', '031', cur, conn)
-    setUpReadingsTable('jessz@umich.edu', '88101', '20200101', '20200415', '17', '031', cur, conn)
-    setUpTableState('jessz@umich.edu', '88101', '20200101', '20200415', '17', '031', cur, conn)
-    setUpC19Country('united-states', 'confirmed', cur, conn)
+    setUpTableCounty('jessz@umich.edu', '88101', '20200101', '20200415', '06', '067', cur, conn)
+    setUpReadingsTable('jessz@umich.edu', '88101', '20200101', '20200415', '06', '067', cur, conn)
+    setUpTableState('jessz@umich.edu', '88101', '20200101', '20200415', '06', '067', cur, conn)
+    createC19Table('switzerland', 'confirmed', cur, conn)
+    insertIntoC19Table('switzerland', 'confirmed', cur, conn)
+    insertIntoC19Table('switzerland', 'confirmed', cur, conn)
 
     get_readings(cur, conn)
     get_state(cur, conn)
