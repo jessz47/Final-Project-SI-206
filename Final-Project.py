@@ -11,9 +11,9 @@ API_AQ = 'bolebird88'
 
 
 #sets up database 
-def setUpDatabase(db_file):
+def setUpDatabase(db_name):
     path = os.path.dirname(os.path.abspath(__file__))
-    conn = sqlite3.connect(path + '/' + db_file)
+    conn = sqlite3.connect(path+'/'+ db_name)
     cur = conn.cursor()
     return cur, conn
 
@@ -53,11 +53,9 @@ def get_COVID_data(country, caseType):
 
 
 def setUpReadingsTable(email, param, bdate, edate, state_num, county_num, cur, conn):
-
-    cur.execute('''
-        CREATE TABLE IF NOT EXISTS Readings 
-            (reading_id INTEGER,
-             date_local TEXT, 
+    cur.execute('DROP TABLE IF EXISTS Readings')
+    cur.execute('''CREATE TABLE Readings 
+             (date_local TEXT, 
              reading TEXT, 
              unit TEXT,
              county_id TEXT,
@@ -66,28 +64,33 @@ def setUpReadingsTable(email, param, bdate, edate, state_num, county_num, cur, c
 
     ''')
     conn.commit()
-    reading_data = get_AQ_data(email, param, bdate, edate, state_num, county_num)
-    data = json.loads(reading_data)
-    rows_added1 = 0
 
-    for index, reading in enumerate(data['Data']):
-        cur.execute('SELECT * FROM Readings WHERE date_local = ?', (reading['date_local'],))
-        row_count = len(cur.fetchall())
-        if(rows_added1 < 20):
-            cur.execute('''INSERT OR IGNORE INTO Readings (reading_id, date_local, reading, unit, county_id, state_id, parameter) 
-                        VALUES (?,?, ?, ?, ?, ?, ?)''', (index, reading['date_local'], reading['sample_measurement'], reading['units_of_measure'], reading['county_code'], reading['state_code'], reading['parameter']))
-            rows_added1 += 1 
-        elif(rows_added1 > 20):
+def insertIntoReadingsTable(email, param, bdate, edate, state_num, county_num, cur, conn):
+    rows_added = 0
+    reading_data = get_AQ_data(email, param, bdate, edate, state_num, county_num)
+    data_reading = json.loads(reading_data)
+
+    for reading in data_reading['Data']:
+        cur.execute('SELECT * FROM Readings WHERE date_local = ? AND reading = ? AND unit = ?', (reading['date_local'], reading['sample_measurement'], reading['units_of_measure']))
+        result = cur.fetchone()
+
+        if(result):
+            continue 
+        elif(rows_added < 20):
+            cur.execute('''INSERT INTO Readings (date_local, reading, unit, county_id, state_id, parameter) 
+                VALUES (?, ?, ?, ?, ?, ?)''', (reading['date_local'], reading['sample_measurement'], reading['units_of_measure'], reading['county_code'], reading['state_code'], reading['parameter']))
+            rows_added += 1 
+        elif(rows_added > 20):
             break
-        elif(row_count > 0):
-            continue
-    conn.commit()
+
+    conn.commit() 
+            
     
 
 def setUpTableState(email, param, bdate, edate, state_num, county_num, cur,conn):
     cur.execute('''
         CREATE TABLE IF NOT EXISTS State 
-            (state_id TEXT, 
+            (state_id TEXT PRIMARY KEY, 
              state_name TEXT) 
 
     ''')
@@ -102,10 +105,11 @@ def setUpTableState(email, param, bdate, edate, state_num, county_num, cur,conn)
 def setUpTableCounty(email, param, bdate, edate, state_num, county_num, cur,conn):
     cur.execute('''
         CREATE TABLE IF NOT EXISTS County 
-           (county_id TEXT, 
-            county_name TEXT, 
+           (county_id TEXT PRIMARY KEY, 
+            county_name TEXT UNIQUE, 
             state_id TEXT)
     ''')  
+
     conn.commit() 
     county_data = get_AQ_data(email, param, bdate, edate, state_num, county_num)
     data = json.loads(county_data)
@@ -115,27 +119,33 @@ def setUpTableCounty(email, param, bdate, edate, state_num, county_num, cur,conn
     conn.commit()
 
 
-def setUpC19Country(country, caseType, cur, conn):
-    cur.execute('CREATE TABLE IF NOT EXISTS Covid (Country TEXT, State TEXT, Status TEXT, Cases INTEGER, Date TEXT)')
+def createC19Table(country, caseType, cur, conn):
+    cur.execute('DROP TABLE IF EXISTS Covid')
+    cur.execute('CREATE TABLE Covid (Country TEXT, State TEXT, Status TEXT, Cases INTEGER, Date TEXT)')
     conn.commit()
-    rows_added = 0 
+
+def insertIntoC19Table(country, caseType, cur, conn):
+    rows_added = 0
     country_data = get_COVID_data(country, caseType)
     data_covid = json.loads(country_data)
     
+
     for data in data_covid:
-        cur.execute('SELECT * FROM Covid WHERE State = ? AND Date = ?', (data['Province'], data['Date']))
-        row_count = len(cur.fetchall())
-        if(rows_added < 20):
-            cur.execute('INSERT OR IGNORE INTO Covid (Country, State, Status, Cases, Date) VALUES (?, ?, ?, ?, ?)', (data['Country'], data['Province'], data['Status'], data['Cases'], data['Date']))
+        cur.execute('SELECT * FROM Covid WHERE Country = ? AND Date = ?', (data['Country'], data['Date']))
+        result = cur.fetchone()
+
+        if(result):
+            continue 
+        elif(rows_added < 20):
+            cur.execute('INSERT INTO Covid (Country, State, Status, Cases, Date) VALUES (?, ?, ?, ?, ?)', (data['Country'], data['Province'], data['Status'], data['Cases'], data['Date']))
             rows_added += 1 
         elif(rows_added > 20):
             break
-        elif(row_count > 0):
-            continue
-    conn.commit() 
 
+    conn.commit() 
+            
 def get_readings(cur, conn):
-    cur.execute("SELECT * FROM Readings")
+    cur.execute("SELECT date_local, reading, unit, county_id, state_id, parameter FROM Readings")
     results1 = cur.fetchall()
     conn.commit()
     print(results1) 
@@ -163,8 +173,6 @@ def get_COVID_country(cur, conn):
 
 
 
-
-
 # class TestAllMethods(unittest.TestCase):
 
     # def setUp(self):
@@ -184,10 +192,45 @@ def get_COVID_country(cur, conn):
 
 def main():
     cur, conn = setUpDatabase('Readings.db')
-    setUpTableCounty('jessz@umich.edu', '88101', '20200101', '20200415', '17', '031', cur, conn)
-    setUpReadingsTable('jessz@umich.edu', '88101', '20200101', '20200415', '17', '031', cur, conn)
-    setUpTableState('jessz@umich.edu', '88101', '20200101', '20200415', '17', '031', cur, conn)
-    setUpC19Country('united-states', 'confirmed', cur, conn)
+    setUpTableCounty('jessz@umich.edu', '88101', '20200101', '20200415', '36', '061', cur, conn)
+    setUpReadingsTable('jessz@umich.edu', '88101', '20200101', '20200415', '36', '061', cur, conn)
+    setUpTableState('jessz@umich.edu', '88101', '20200101', '20200415', '36', '061', cur, conn)
+
+    insertIntoReadingsTable('jessz@umich.edu', '88101', '20200101', '20200419', '17', '031', cur, conn)
+    insertIntoReadingsTable('jessz@umich.edu', '88101', '20200101', '20200419', '17', '031', cur, conn)
+    insertIntoReadingsTable('jessz@umich.edu', '88101', '20200101', '20200419', '17', '031', cur, conn)
+    insertIntoReadingsTable('jessz@umich.edu', '88101', '20200101', '20200419', '17', '031', cur, conn)
+    insertIntoReadingsTable('jessz@umich.edu', '88101', '20200101', '20200419', '36', '061', cur, conn)
+    insertIntoReadingsTable('jessz@umich.edu', '88101', '20200101', '20200419', '36', '061', cur, conn)
+    insertIntoReadingsTable('jessz@umich.edu', '88101', '20200101', '20200419', '36', '061', cur, conn)
+    insertIntoReadingsTable('jessz@umich.edu', '88101', '20200101', '20200419', '36', '061', cur, conn)
+
+
+
+
+
+    createC19Table('Canada', 'confirmed', cur, conn)
+    
+    insertIntoC19Table('Canada', 'confirmed', cur, conn)
+    insertIntoC19Table('Canada', 'confirmed', cur, conn)
+    insertIntoC19Table('Canada', 'confirmed', cur, conn)
+    insertIntoC19Table('Canada', 'confirmed', cur, conn)
+    insertIntoC19Table('Canada', 'confirmed', cur, conn)
+    insertIntoC19Table('Canada', 'confirmed', cur, conn)
+    insertIntoC19Table('Canada', 'confirmed', cur, conn)
+    insertIntoC19Table('Italy', 'confirmed', cur, conn)
+    insertIntoC19Table('Italy', 'confirmed', cur, conn)
+    insertIntoC19Table('Italy', 'confirmed', cur, conn)
+
+
+
+
+
+
+
+
+
+
 
     get_readings(cur, conn)
     get_state(cur, conn)
@@ -195,7 +238,6 @@ def main():
     get_COVID_country(cur, conn)
 
 
-    #get_COVID_data("United States", "confirmed")
 
 
 
