@@ -68,9 +68,19 @@ def setUpReadingsTable(email, param, bdate, edate, state_num, county_num, cur, c
     conn.commit()
     reading_data = get_AQ_data(email, param, bdate, edate, state_num, county_num)
     data = json.loads(reading_data)
-    for index, reading in enumerate(data['Data']): 
-        cur.execute('''INSERT OR IGNORE INTO Readings (reading_id, date_local, reading, unit, county_id, state_id, parameter) 
-                VALUES (?,?, ?, ?, ?, ?, ?)''', (index, reading['date_local'], reading['sample_measurement'], reading['units_of_measure'], reading['county_code'], reading['state_code'], reading['parameter']))
+    rows_added1 = 0
+
+    for index, reading in enumerate(data['Data']):
+        cur.execute('SELECT * FROM Readings WHERE date_local = ?', (reading['date_local'],))
+        row_count = len(cur.fetchall())
+        if(rows_added1 < 20):
+            cur.execute('''INSERT OR IGNORE INTO Readings (reading_id, date_local, reading, unit, county_id, state_id, parameter) 
+                        VALUES (?,?, ?, ?, ?, ?, ?)''', (index, reading['date_local'], reading['sample_measurement'], reading['units_of_measure'], reading['county_code'], reading['state_code'], reading['parameter']))
+            rows_added1 += 1 
+        elif(rows_added1 > 20):
+            break
+        elif(row_count > 0):
+            continue
     conn.commit()
     
 
@@ -114,9 +124,8 @@ def setUpC19Country(country, caseType, cur, conn):
     
     for data in data_covid:
         cur.execute('SELECT * FROM Covid WHERE State = ? AND Date = ?', (data['Province'], data['Date']))
-        row_count = cur.rowcount 
-        print(row_count)
-        if(row_count == 0 and rows_added < 20):
+        row_count = len(cur.fetchall())
+        if(rows_added < 20):
             cur.execute('INSERT OR IGNORE INTO Covid (Country, State, Status, Cases, Date) VALUES (?, ?, ?, ?, ?)', (data['Country'], data['Province'], data['Status'], data['Cases'], data['Date']))
             rows_added += 1 
         elif(rows_added > 20):
@@ -126,7 +135,7 @@ def setUpC19Country(country, caseType, cur, conn):
     conn.commit() 
 
 def get_readings(cur, conn):
-    cur.execute("SELECT reading_id, date_local, reading, unit, county_id, state_id, parameter FROM Readings")
+    cur.execute("SELECT * FROM Readings")
     results1 = cur.fetchall()
     conn.commit()
     print(results1) 
@@ -175,9 +184,9 @@ def get_COVID_country(cur, conn):
 
 def main():
     cur, conn = setUpDatabase('Readings.db')
-    setUpTableCounty('jessz@umich.edu', '88101', '20200101', '20200415', '06', '067', cur, conn)
-    setUpReadingsTable('jessz@umich.edu', '88101', '20200101', '20200415', '06', '067', cur, conn)
-    setUpTableState('jessz@umich.edu', '88101', '20200101', '20200415', '06', '067', cur, conn)
+    setUpTableCounty('jessz@umich.edu', '88101', '20200101', '20200415', '17', '031', cur, conn)
+    setUpReadingsTable('jessz@umich.edu', '88101', '20200101', '20200415', '17', '031', cur, conn)
+    setUpTableState('jessz@umich.edu', '88101', '20200101', '20200415', '17', '031', cur, conn)
     setUpC19Country('united-states', 'confirmed', cur, conn)
 
     get_readings(cur, conn)
