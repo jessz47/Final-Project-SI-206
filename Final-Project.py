@@ -202,7 +202,7 @@ def main():
     setUpReadingsTable('jessz@umich.edu', '88101', '20200101', '20200415', '06', '067', cur, conn)
     setUpTableState('jessz@umich.edu', '88101', '20200101', '20200415', '06', '067', cur, conn)
     createC19Table('switzerland', 'confirmed', cur, conn)
-    insertIntoC19Table('switzerland', 'confirmed', cur, con)
+    insertIntoC19Table('switzerland', 'confirmed', cur, conn)
     insertIntoC19Table('switzerland', 'confirmed', cur, conn)
 
     get_readings(cur, conn)
