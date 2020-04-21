@@ -118,7 +118,6 @@ def setUpTableCounty(email, param, bdate, edate, state_num, county_num, cur,conn
                 VALUES (?,?,?)''', (county['county_code'], county['county'], county['state_code']))
     conn.commit()
 
-
 def createC19Table(country, caseType, cur, conn):
     cur.execute('DROP TABLE IF EXISTS Covid')
     cur.execute('CREATE TABLE Covid (Country TEXT, State TEXT, Status TEXT, Cases INTEGER, Date TEXT)')
@@ -131,7 +130,7 @@ def insertIntoC19Table(country, caseType, cur, conn):
     
 
     for data in data_covid:
-        cur.execute('SELECT * FROM Covid WHERE Country = ? AND Date = ?', (data['Country'], data['Date']))
+        cur.execute('SELECT * FROM Covid WHERE Country = ? AND State = ? AND Cases = ? AND Date = ?', (data['Country'], data['Province'], data['Cases'], data['Date']))
         result = cur.fetchone()
 
         if(result):
@@ -221,14 +220,6 @@ def main():
     insertIntoC19Table('Italy', 'confirmed', cur, conn)
     insertIntoC19Table('Italy', 'confirmed', cur, conn)
     insertIntoC19Table('Italy', 'confirmed', cur, conn)
-
-
-
-
-
-
-
-
 
 
 
