@@ -56,7 +56,7 @@ def setUpReadingsTable(email, param, bdate, edate, state_num, county_num, cur, c
 
     cur.execute('''
         CREATE TABLE IF NOT EXISTS Readings 
-            (reading_id INTEGER PRIMARY KEY,
+            (reading_id INTEGER,
              date_local TEXT, 
              reading TEXT, 
              unit TEXT,
@@ -87,7 +87,7 @@ def setUpReadingsTable(email, param, bdate, edate, state_num, county_num, cur, c
 def setUpTableState(email, param, bdate, edate, state_num, county_num, cur,conn):
     cur.execute('''
         CREATE TABLE IF NOT EXISTS State 
-            (state_id TEXT PRIMARY KEY, 
+            (state_id TEXT, 
              state_name TEXT) 
 
     ''')
@@ -102,7 +102,7 @@ def setUpTableState(email, param, bdate, edate, state_num, county_num, cur,conn)
 def setUpTableCounty(email, param, bdate, edate, state_num, county_num, cur,conn):
     cur.execute('''
         CREATE TABLE IF NOT EXISTS County 
-           (county_id TEXT PRIMARY KEY, 
+           (county_id TEXT, 
             county_name TEXT, 
             state_id TEXT)
     ''')  
@@ -116,7 +116,7 @@ def setUpTableCounty(email, param, bdate, edate, state_num, county_num, cur,conn
 
 
 def setUpC19Country(country, caseType, cur, conn):
-    cur.execute('CREATE TABLE IF NOT EXISTS Covid (Country TEXT PRIMARY KEY, State TEXT, Status TEXT, Cases INTEGER, Date TEXT)')
+    cur.execute('CREATE TABLE IF NOT EXISTS Covid (Country TEXT, State TEXT, Status TEXT, Cases INTEGER, Date TEXT)')
     conn.commit()
     rows_added = 0 
     country_data = get_COVID_data(country, caseType)
