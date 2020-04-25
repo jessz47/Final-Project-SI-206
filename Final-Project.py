@@ -231,6 +231,20 @@ def main():
 
 
 
+#CALCULATIONS
+def jointables(cur, conn):
+    cur.execute('''
+                SELECT Readings.date_local, Readings.reading, Readings.county_id
+                FROM Readings
+                JOIN County  
+                WHERE Restaurants.county_id = County.county_id
+                 '''
+    )
+
+    results = cur.fetchall()
+    return results 
+
+
 
 
 if __name__ == "__main__":
