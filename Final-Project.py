@@ -6,8 +6,8 @@ import requests
 import pandas 
 import matplotlib
 import matplotlib.pyplot as plt
-
-#Names: Jessica Zhang 
+from scipy.stats import pearsonr 
+#Names: Jessica Zhang, Darian Chang
 #Project Topic: How the Coronavirus is affecting CO2 Levels in the Atmosphere in Delhi, India (using AQI) and Int'l Flights 
 API_AQ = 'bolebird88'
 
@@ -144,6 +144,35 @@ def insertIntoC19Table(country, caseType, cur, conn):
             break
 
     conn.commit() 
+
+def get_AQI(cur, conn):
+    cur.execute("SELECT reading FROM Readings")
+    results = cur.fetchmany(size = 75)
+    return results 
+
+def get_cases(cur, conn):
+    cur.execute("SELECT Cases FROM Cov  id")
+    results = cur.fetchmany(size = 75)
+    return results
+
+def get_pearsonCorrelation(cur, conn):
+    results1 = get_AQI(cur, conn)
+    results2 = get_cases(cur, conn)
+    new_list1 = [float(x[0]) for x in results1 if type(x[0]) is str]
+    new_list2 = [x[0] for x in results2 if type(x[0]) is int] 
+    if(len(new_list1) > len(new_list2)):
+        new_list1 = new_list1[:len(new_list2)]
+    else:
+        new_list2 = new_list2[:len(new_list1)]
+    corr, _ = pearsonr(new_list1, new_list2)
+    return corr 
+
+def writeData(filename, data):
+    fpath = "/Users/Darian/Desktop/Sophomore Year/Winter 2020/SI 206/Final-Project-SI-206/" + filename
+    with open(fpath, "w+") as fp:
+        fp.write("Pearson Coefficient Between AQI and Number of Covid19 Cases: " + str(data))
+    fp.close()
+    
             
 def get_readings(cur, conn):
     cur.execute("SELECT date_local, reading, unit, county_id, state_id, parameter FROM Readings")
@@ -360,6 +389,9 @@ def main():
     get_county(cur, conn) 
     get_COVID_country(cur, conn)
     
+
+    data = get_pearsonCorrelation(cur, conn)
+    writeData("test.txt", data)
     createscatterplotsAQ(cur, conn)
     create_area_plot(cur, conn)
 

@@ -1,0 +1,1 @@
+Pearson Coefficient Between AQI and Number of Covid19 Cases: -0.03939283499938889
