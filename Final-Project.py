@@ -205,7 +205,7 @@ def jointables(cur, conn):
                 SELECT Readings.date_local, Readings.reading, Readings.county_id
                 FROM Readings
                 JOIN County  
-                WHERE Restaurants.county_id = County.county_id
+                WHERE Readings.county_id = County.county_id
                  '''
     )
     conn.commit()
